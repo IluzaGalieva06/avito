@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import models
@@ -135,4 +137,12 @@ def get_bids_for_tender(db: Session, tender_id: str, limit: int, offset: int) ->
         ))
 
     return results
+
+
+def get_bid_status(db: Session, bid_id: UUID) -> str:
+    bid = db.query(models.Bid).filter(models.Bid.id == bid_id).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid not found")
+
+    return bid.status
 

@@ -1,10 +1,12 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 import crud
 import schemas
 import database
 from typing import List, Optional
-from models import Tender, Employee
+from models import Tender, Employee, Bid
 
 router = APIRouter()
 
@@ -171,4 +173,19 @@ def list_bids_for_tender(
     bids = crud.get_bids_for_tender(db=db, tender_id=tenderId, limit=limit, offset=offset)
     return bids
 
+@router.get("/bids/{bidId}/status", response_model=str)
+def get_bid_status(
+    bidId: UUID,
+    username: str = Query(..., description="Username of the person requesting the status"),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    bid = db.query(Bid).filter(Bid.id == bidId).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid not found")
+
+    return bid.status
 
