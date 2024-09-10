@@ -18,7 +18,7 @@ class TenderCreate(BaseModel):
 
 
 class TenderSchema(BaseModel):
-    id: UUID  # Change int to UUID
+    id: UUID
     name: str
     description: str
     status: str

@@ -106,3 +106,32 @@ def edit_tender(
     db.refresh(tender)
 
     return tender
+
+@router.put("/tenders/{tenderId}/rollback/{version}", response_model=schemas.TenderSchema)
+def rollback_tender(
+    tenderId: str,
+    version: int,
+    username: str = Query(..., description="Username of the person performing the rollback"),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    tender = db.query(Tender).filter(Tender.id == tenderId).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Tender not found")
+
+    if tender.creator_id != user.id:
+        raise HTTPException(status_code=403, detail="Insufficient rights to perform this action")
+
+    if version >= tender.version:
+        raise HTTPException(status_code=400, detail="Invalid version number for rollback")
+
+
+    tender.version = version
+
+    db.commit()
+    db.refresh(tender)
+
+    return tender
