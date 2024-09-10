@@ -112,3 +112,27 @@ def get_bids_by_user(db: Session, username: str, limit: int, offset: int) -> Lis
         for bid in bids
     ]
 
+
+def get_bids_for_tender(db: Session, tender_id: str, limit: int, offset: int) -> List[schemas.Bid]:
+    query = db.query(models.Bid).filter(models.Bid.tender_id == tender_id)
+    query = query.order_by(models.Bid.created_at).offset(offset).limit(limit)
+
+    bids = query.all()
+
+    results = []
+    for bid in bids:
+        author_type = "Organization" if bid.organization_id else "User"
+        results.append(schemas.Bid(
+            id=bid.id,
+            name=bid.name,
+            description=bid.description,
+            tenderId=bid.tender_id,
+            status=bid.status,
+            version=bid.version,
+            createdAt=bid.created_at,
+            authorId=bid.author_id,
+            authorType=author_type
+        ))
+
+    return results
+

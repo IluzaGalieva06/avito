@@ -152,3 +152,23 @@ def get_user_bids(
         raise HTTPException(status_code=404, detail="No bids found for the specified user")
     return bids
 
+@router.get("/bids/{tenderId}/list", response_model=List[schemas.Bid])
+def list_bids_for_tender(
+    tenderId: str,
+    username: str,
+    limit: int = Query(5, ge=0, le=50, description="Максимальное число возвращаемых объектов"),
+    offset: int = Query(0, ge=0, description="Количество пропущенных объектов"),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    tender = db.query(Tender).filter(Tender.id == tenderId).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Tender not found")
+
+    bids = crud.get_bids_for_tender(db=db, tender_id=tenderId, limit=limit, offset=offset)
+    return bids
+
+
