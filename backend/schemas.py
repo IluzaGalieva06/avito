@@ -79,3 +79,11 @@ class Bid(BaseModel):
 
 class BidStatusResponse(BaseModel):
     status: str
+
+class BidUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True

@@ -214,3 +214,41 @@ def update_bid_status(
     db.refresh(bid)
 
     return schemas.BidStatusResponse(status=bid.status)
+
+@router.patch("/bids/{bidId}/edit", response_model=schemas.Bid)
+def edit_bid(
+    bidId: UUID,
+    bid_update: schemas.BidUpdate,
+    username: str = Query(..., description="Username of the person editing the bid"),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    bid = db.query(Bid).filter(Bid.id == bidId).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid not found")
+
+    if bid.author_id != user.id:
+        raise HTTPException(status_code=403, detail="Insufficient rights to perform this action")
+
+    if bid_update.name:
+        bid.name = bid_update.name
+    if bid_update.description:
+        bid.description = bid_update.description
+
+    db.commit()
+    db.refresh(bid)
+
+    return schemas.Bid(
+        id=bid.id,
+        name=bid.name,
+        description=bid.description,
+        tenderId=bid.tender_id,
+        status=bid.status,
+        version=bid.version,
+        createdAt=bid.created_at,
+        authorId=bid.author_id,
+        authorType="User"
+    )
