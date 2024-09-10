@@ -31,3 +31,5 @@ HELP.md
 
 ### PyCharm ###
 venv
+.env
+__pycache__
