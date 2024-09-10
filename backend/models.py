@@ -15,7 +15,7 @@ class Employee(Base):
 
 class Organization(Base):
     __tablename__ = "organization"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     type = Column(Enum('IE', 'LLC', 'JSC', name='organization_type'))
@@ -24,10 +24,10 @@ class Organization(Base):
 
 class Tender(Base):
     __tablename__ = "tender"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     description = Column(Text)
-    organizationId = Column(Integer, ForeignKey("organization.id"))
+    organizationId = Column(UUID(as_uuid=True), ForeignKey("organization.id"))
     creator_id = Column(UUID(as_uuid=True), ForeignKey("employee.id"))
     serviceType = Column(String(50))
     status = Column(String(50), default="CREATED")
@@ -37,10 +37,10 @@ class Tender(Base):
 
 class Bid(Base):
     __tablename__ = "bid"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     description = Column(Text)
-    tender_id = Column(Integer, ForeignKey("tender.id"))
+    tender_id = Column(UUID(as_uuid=True), ForeignKey("tender.id"))
     status = Column(String(50), default="CREATED")
     version = Column(Integer, default=1)
     created_at = Column(DateTime, server_default=func.now())
@@ -49,4 +49,4 @@ class Bid(Base):
 class OrganizationResponsibility(Base):
     __tablename__ = "organization_responsibility"
     user_id = Column(UUID(as_uuid=True), ForeignKey("employee.id"), primary_key=True)
-    organization_id = Column(Integer, ForeignKey("organization.id"), primary_key=True)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organization.id"), primary_key=True)

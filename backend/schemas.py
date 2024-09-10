@@ -1,15 +1,16 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 
 class TenderCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
-    organizationId: int = Field(..., alias='organizationId')
+    organizationId: UUID = Field(..., alias='organizationId')  # Change int to UUID
     serviceType: Optional[str] = Field(None, max_length=50, alias='serviceType')
     status: str = "CREATED"
-    creatorUsername: str = Field(...,alias='creatorUsername')
+    creatorUsername: str = Field(..., alias='creatorUsername')
 
     class Config:
         orm_mode = True
@@ -17,18 +18,19 @@ class TenderCreate(BaseModel):
 
 
 class TenderSchema(BaseModel):
-    id: int
+    id: UUID  # Change int to UUID
     name: str
     description: str
     status: str
     serviceType: str = Field(..., alias='serviceType')
-    organizationId: int = Field(..., alias='organizationId')
+    organizationId: UUID = Field(..., alias='organizationId')  # Change int to UUID
     version: int
     createdAt: datetime = Field(..., alias='created_at')
 
     class Config:
         orm_mode = True
         allow_population_by_field_name = True
+
 
 
 # Схема для создания предложения (bid)
