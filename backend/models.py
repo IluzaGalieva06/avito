@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum, Text, DateTime
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .database import Base
+from database import Base
 
 class Employee(Base):
     __tablename__ = "employee"
@@ -26,7 +25,8 @@ class Tender(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     description = Column(Text)
-    organization_id = Column(Integer, ForeignKey("organization.id"))
+    organizationId = Column(Integer, ForeignKey("organization.id"))
+    serviceType = Column(String(50))
     status = Column(String(50), default="CREATED")
     version = Column(Integer, default=1)
     created_at = Column(DateTime, server_default=func.now())
