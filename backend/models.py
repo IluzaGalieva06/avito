@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum, Text, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
@@ -37,7 +38,7 @@ class Tender(Base):
 
 class Bid(Base):
     __tablename__ = "bid"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     tender_id = Column(UUID(as_uuid=True), ForeignKey("tender.id"))
@@ -47,6 +48,7 @@ class Bid(Base):
     version = Column(Integer, default=1)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+    feedbacks = relationship("BidFeedback", back_populates="bid")
 
 
 
@@ -54,3 +56,13 @@ class OrganizationResponsibility(Base):
     __tablename__ = "organization_responsibility"
     user_id = Column(UUID(as_uuid=True), ForeignKey("employee.id"), primary_key=True)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organization.id"), primary_key=True)
+
+
+class BidFeedback(Base):
+    __tablename__ = "bid_feedback"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bid_id = Column(UUID(as_uuid=True), ForeignKey("bid.id"))
+    username = Column(String(50), nullable=False)
+    feedback = Column(Text, nullable=False)
+
+    bid = relationship("Bid", back_populates="feedbacks")

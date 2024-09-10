@@ -59,7 +59,9 @@ CREATE TABLE public.bid (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone,
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    tender_id uuid
+    tender_id uuid,
+    organization_id uuid,
+    author_id uuid
 );
 
 
@@ -103,7 +105,7 @@ ALTER TABLE public.organization OWNER TO postgres;
 
 CREATE TABLE public.organization_responsibility (
     user_id uuid NOT NULL,
-    organization_id integer NOT NULL
+    organization_id uuid
 );
 
 
@@ -143,14 +145,6 @@ ALTER TABLE ONLY public.employee
 
 ALTER TABLE ONLY public.employee
     ADD CONSTRAINT employee_username_key UNIQUE (username);
-
-
---
--- Name: organization_responsibility organization_responsibility_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.organization_responsibility
-    ADD CONSTRAINT organization_responsibility_pkey PRIMARY KEY (user_id, organization_id);
 
 
 --

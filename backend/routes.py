@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Body
 from sqlalchemy.orm import Session
 import crud
 import schemas
 import database
 from typing import List, Optional
-from models import Tender, Employee, Bid
+from models import Tender, Employee, Bid, OrganizationResponsibility
 
 router = APIRouter()
 
@@ -252,3 +252,72 @@ def edit_bid(
         authorId=bid.author_id,
         authorType="User"
     )
+
+
+@router.put("/bids/{bidId}/submit_decision", response_model=schemas.Bid)
+def submit_decision(
+        bidId: UUID,
+        decision: str = Query(..., description="Decision on the bid", enum=["Approved", "Rejected"]),
+        username: str = Query(..., description="Username of the person submitting the decision"),
+        db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User does not exist or is incorrect")
+
+    bid = db.query(Bid).filter(Bid.id == bidId).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid not found")
+
+    tender = db.query(Tender).filter(Tender.id == bid.tender_id).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Tender not found")
+
+    organization_responsibility = db.query(OrganizationResponsibility).filter(
+        OrganizationResponsibility.user_id == user.id,
+        OrganizationResponsibility.organization_id == bid.organization_id
+    ).first()
+
+    if not organization_responsibility:
+        raise HTTPException(status_code=403, detail="Insufficient rights to perform this action")
+
+    if decision == "Approved":
+        bid.status = "Approved"
+        if all(b.status == "Approved" for b in db.query(Bid).filter(Bid.tender_id == bid.tender_id).all()):
+            tender.status = "Closed"
+            db.commit()
+    elif decision == "Rejected":
+        bid.status = "Rejected"
+
+    db.commit()
+    db.refresh(bid)
+
+    return schemas.Bid(
+        id=bid.id,
+        name=bid.name,
+        description=bid.description,
+        tenderId=bid.tender_id,
+        status=bid.status,
+        version=bid.version,
+        createdAt=bid.created_at,
+        authorId=bid.author_id,
+        authorType="User"
+    )
+@router.put("/bids/{bidId}/feedback", response_model=schemas.BidFeedbackCreate)
+def submit_bid_feedback(
+    bidId: UUID,
+    username: str = Query(...),
+    feedback: str = Body(..., embed=True),
+    db: Session = Depends(database.get_db)
+):
+    # Создаем отзыв
+    feedback_data = schemas.BidFeedbackCreate(username=username, feedback=feedback, bidId=bidId)
+    feedback = crud.create_feedback(db=db, bidId=bidId, feedback_data=feedback_data, username=username)
+    return schemas.BidFeedbackCreate(
+        bidId=feedback.bid_id,
+        username=feedback.username,
+        feedback=feedback.feedback
+    )
+
+
+

@@ -139,4 +139,24 @@ def get_bids_for_tender(db: Session, tender_id: str, limit: int, offset: int) ->
     return results
 
 
+def create_feedback(db: Session, bidId: UUID, username: str, feedback_data: schemas.BidFeedbackCreate):
+    bid = db.query(models.Bid).filter(models.Bid.id == bidId).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid not found")
+    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    db_feedback = models.BidFeedback(
+        bid_id=feedback_data.bidId,
+        username=feedback_data.username,
+        feedback=feedback_data.feedback
+    )
+    db.add(db_feedback)
+    db.commit()
+    db.refresh(db_feedback)
+    return db_feedback
+
+
 
