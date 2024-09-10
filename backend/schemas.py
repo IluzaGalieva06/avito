@@ -9,6 +9,7 @@ class TenderCreate(BaseModel):
     organizationId: int = Field(..., alias='organizationId')
     serviceType: Optional[str] = Field(None, max_length=50, alias='serviceType')
     status: str = "CREATED"
+    creatorUsername: str = Field(...,alias='creatorUsername')
 
     class Config:
         orm_mode = True
@@ -21,13 +22,14 @@ class TenderSchema(BaseModel):
     description: str
     status: str
     serviceType: str = Field(..., alias='serviceType')
-    organizationId: int = Field(..., alias='organizationId')  # Добавьте это поле
+    organizationId: int = Field(..., alias='organizationId')
     version: int
     createdAt: datetime = Field(..., alias='created_at')
 
     class Config:
         orm_mode = True
         allow_population_by_field_name = True
+
 
 # Схема для создания предложения (bid)
 class BidCreate(BaseModel):
