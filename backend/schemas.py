@@ -1,3 +1,5 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -46,24 +48,31 @@ class TenderUpdate(BaseModel):
 class BidCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
-    tender_id: int
-    organization_id: int
+    tender_id: UUID = Field(..., alias='tenderId')
+    organization_id: UUID = Field(..., alias='organizationId')
     status: str = "CREATED"
+    creator_username: str = Field(..., alias='creatorUsername')
 
     class Config:
         orm_mode = True
+        allow_population_by_field_name = True
 
 # Схема для отображения предложения (bid)
+class AuthorTypeEnum(str, Enum):
+    ORGANIZATION = "Organization"
+    USER = "User"
+
 class Bid(BaseModel):
-    id: int
+    id: UUID
     name: str
     description: Optional[str]
-    tender_id: int
-    organization_id: int
+    tender_id: UUID = Field(..., alias='tenderId')
     status: str
     version: int
-    created_at: datetime
-    updated_at: Optional[datetime]
+    created_at: datetime = Field(..., alias='createdAt')
+    author_id: UUID = Field(..., alias='authorId')
+    author_type: AuthorTypeEnum = Field(..., alias='authorType')
 
     class Config:
         orm_mode = True
+        allow_population_by_field_name = True

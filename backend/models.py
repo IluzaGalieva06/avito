@@ -41,10 +41,14 @@ class Bid(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     tender_id = Column(UUID(as_uuid=True), ForeignKey("tender.id"))
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organization.id"))
+    author_id = Column(UUID(as_uuid=True), ForeignKey("employee.id"))
     status = Column(String(50), default="CREATED")
     version = Column(Integer, default=1)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+
+
 
 class OrganizationResponsibility(Base):
     __tablename__ = "organization_responsibility"

@@ -53,4 +53,37 @@ def get_tenders_by_user(db: Session, username: str, limit: int, offset: int) -> 
 
     return results
 
+def create_bid(db: Session, bid_data: schemas.BidCreate):
+    user = db.query(models.Employee).filter(models.Employee.username == bid_data.creator_username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+
+    author_type = "User"
+
+    db_bid = models.Bid(
+        name=bid_data.name,
+        description=bid_data.description,
+        tender_id=bid_data.tender_id,
+        organization_id=bid_data.organization_id,
+        status=bid_data.status,
+        version=1,
+        author_id=user.id
+    )
+    db.add(db_bid)
+    db.commit()
+    db.refresh(db_bid)
+
+    return {
+        "id": db_bid.id,
+        "name": db_bid.name,
+        "description": db_bid.description,
+        "tenderId": db_bid.tender_id,
+        "organizationId": db_bid.organization_id,
+        "status": db_bid.status,
+        "version": db_bid.version,
+        "createdAt": db_bid.created_at,
+        "authorId": db_bid.author_id,
+        "authorType": author_type
+    }
 

@@ -135,3 +135,9 @@ def rollback_tender(
     db.refresh(tender)
 
     return tender
+
+# routes.py
+@router.post("/bids/new", response_model=schemas.Bid)
+def create_bid(bid: schemas.BidCreate, db: Session = Depends(database.get_db)):
+    return crud.create_bid(db=db, bid_data=bid)
+
