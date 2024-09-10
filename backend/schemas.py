@@ -76,3 +76,6 @@ class Bid(BaseModel):
     class Config:
         orm_mode = True
         allow_population_by_field_name = True
+
+class BidStatusResponse(BaseModel):
+    status: str

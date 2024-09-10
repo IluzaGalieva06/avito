@@ -189,3 +189,28 @@ def get_bid_status(
 
     return bid.status
 
+VALID_BID_STATUSES = ["Created", "Published", "Canceled", "Approved", "Rejected"]
+
+@router.put("/bids/{bidId}/status", response_model=schemas.BidStatusResponse)
+def update_bid_status(
+    bidId: UUID,
+    status: str = Query(..., description="Статус предложения", enum=VALID_BID_STATUSES),
+    username: str = Query(..., description="Пользователь, который обновляет статус"),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Пользователь не существует или некорректен")
+
+    bid = db.query(Bid).filter(Bid.id == bidId).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Предложение не найдено")
+
+    if bid.author_id != user.id:
+        raise HTTPException(status_code=403, detail="Недостаточно прав для выполнения действия")
+
+    bid.status = status
+    db.commit()
+    db.refresh(bid)
+
+    return schemas.BidStatusResponse(status=bid.status)
