@@ -4,7 +4,7 @@ import crud
 import schemas
 import database
 from typing import List, Optional
-from models import Tender
+from models import Tender, Employee
 
 router = APIRouter()
 
@@ -49,3 +49,28 @@ def get_tender_status(
 
     return tender.status
 
+VALID_STATUSES = ["Created", "Published", "Closed"]
+
+@router.put("/tenders/{tenderId}/status", response_model=schemas.TenderSchema)
+def update_tender_status(
+    tenderId: str,
+    status: str = Query(..., description="Статус тендера", enum=VALID_STATUSES),
+    username: str = Query(..., description="Пользователь, который обновляет статус"),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Пользователь не существует или некорректен")
+
+    tender = db.query(Tender).filter(Tender.id == tenderId).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Тендер не найден")
+
+    if tender.creator_id != user.id:
+        raise HTTPException(status_code=403, detail="Недостаточно прав для выполнения действия")
+
+    tender.status = status
+    db.commit()
+    db.refresh(tender)
+
+    return tender
