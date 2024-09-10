@@ -4,6 +4,7 @@ import crud
 import schemas
 import database
 from typing import List, Optional
+from models import Tender
 
 router = APIRouter()
 
@@ -36,3 +37,15 @@ def get_user_tenders(
     if not tenders:
         raise HTTPException(status_code=404, detail="No tenders found for the specified user")
     return tenders
+
+@router.get("/tenders/{tenderId}/status", response_model=str)
+def get_tender_status(
+    tenderId: str,
+    db: Session = Depends(database.get_db)
+):
+    tender = db.query(Tender).filter(Tender.id == tenderId).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Tender not found")
+
+    return tender.status
+

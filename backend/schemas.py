@@ -7,7 +7,7 @@ from uuid import UUID
 class TenderCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
-    organizationId: UUID = Field(..., alias='organizationId')  # Change int to UUID
+    organizationId: UUID = Field(..., alias='organizationId')
     serviceType: Optional[str] = Field(None, max_length=50, alias='serviceType')
     status: str = "CREATED"
     creatorUsername: str = Field(..., alias='creatorUsername')
@@ -23,7 +23,7 @@ class TenderSchema(BaseModel):
     description: str
     status: str
     serviceType: str = Field(..., alias='serviceType')
-    organizationId: UUID = Field(..., alias='organizationId')  # Change int to UUID
+    organizationId: UUID = Field(..., alias='organizationId')
     version: int
     createdAt: datetime = Field(..., alias='created_at')
 
