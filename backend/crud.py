@@ -87,3 +87,28 @@ def create_bid(db: Session, bid_data: schemas.BidCreate):
         "authorType": author_type
     }
 
+def get_bids_by_user(db: Session, username: str, limit: int, offset: int) -> List[schemas.Bid]:
+    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    query = db.query(models.Bid).filter(models.Bid.author_id == user.id)
+    query = query.order_by(models.Bid.created_at).offset(offset).limit(limit)
+
+    bids = query.all()
+
+    return [
+        schemas.Bid(
+            id=bid.id,
+            name=bid.name,
+            description=bid.description,
+            tenderId=bid.tender_id,
+            status=bid.status,
+            version=bid.version,
+            createdAt=bid.created_at,
+            authorId=bid.author_id,
+            authorType="User"
+        )
+        for bid in bids
+    ]
+

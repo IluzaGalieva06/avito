@@ -136,8 +136,19 @@ def rollback_tender(
 
     return tender
 
-# routes.py
 @router.post("/bids/new", response_model=schemas.Bid)
 def create_bid(bid: schemas.BidCreate, db: Session = Depends(database.get_db)):
     return crud.create_bid(db=db, bid_data=bid)
+
+@router.get("/bids/my", response_model=List[schemas.Bid])
+def get_user_bids(
+    username: str,
+    limit: int = Query(5, ge=0, le=50, description="Максимальное число возвращаемых объектов"),
+    offset: int = Query(0, ge=0, description="Количество пропущенных объектов"),
+    db: Session = Depends(database.get_db)
+):
+    bids = crud.get_bids_by_user(db=db, username=username, limit=limit, offset=offset)
+    if not bids:
+        raise HTTPException(status_code=404, detail="No bids found for the specified user")
+    return bids
 
