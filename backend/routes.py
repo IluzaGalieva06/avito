@@ -74,3 +74,35 @@ def update_tender_status(
     db.refresh(tender)
 
     return tender
+
+@router.patch("/tenders/{tenderId}/edit", response_model=schemas.TenderSchema)
+def edit_tender(
+    tenderId: str,
+    username: str = Query(..., description="Username of the person editing the tender"),
+    tender_update: schemas.TenderUpdate = Depends(),
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(Employee).filter(Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    tender = db.query(Tender).filter(Tender.id == tenderId).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Tender not found")
+
+    if tender.creator_id != user.id:
+        raise HTTPException(status_code=403, detail="Insufficient rights to perform this action")
+
+    if tender_update.name:
+        tender.name = tender_update.name
+    if tender_update.description:
+        tender.description = tender_update.description
+    if tender_update.serviceType:
+        tender.serviceType = tender_update.serviceType
+    if tender_update.version:
+        tender.version = tender_update.version
+
+    db.commit()
+    db.refresh(tender)
+
+    return tender
