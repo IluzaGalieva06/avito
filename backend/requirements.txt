@@ -4,3 +4,4 @@ psycopg2-binary==2.9.9
 SQLAlchemy==2.0.34
 pydantic==2.9.0
 pre-commit==3.8.0
+python-dotenv==1.0.1
