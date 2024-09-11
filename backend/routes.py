@@ -6,7 +6,7 @@ import crud
 import schemas
 import database
 from typing import List, Optional
-from models import Tender, Employee, Bid, OrganizationResponsibility
+from models import Tender, Employee, Bid, OrganizationResponsibility, BidFeedback
 
 router = APIRouter()
 
@@ -318,6 +318,65 @@ def submit_bid_feedback(
         username=feedback.username,
         feedback=feedback.feedback
     )
+
+@router.put("/bids/{bidId}/rollback/{version}", response_model=schemas.Bid)
+def rollback_bid(
+    bidId: UUID,
+    version: int,
+    username: str = Query(..., description="Username of the person performing the rollback"),
+    db: Session = Depends(database.get_db)
+):
+    # Call the rollback function from crud
+    bid = crud.rollback_bid(db=db, bid_id=bidId, version=version, username=username)
+    return bid
+
+@router.get("/bids/{tenderId}/reviews", response_model=List[schemas.BidFeedbackCreate])
+def get_bid_reviews(
+    tenderId: UUID,
+    authorUsername: str,
+    requesterUsername: str,
+    limit: int = Query(5, ge=0, le=50, description="Maximum number of objects to return"),
+    offset: int = Query(0, ge=0, description="Number of objects to skip from the beginning"),
+    db: Session = Depends(database.get_db)
+):
+    # Check if the requester exists
+    requester = db.query(Employee).filter(Employee.username == requesterUsername).first()
+    if not requester:
+        raise HTTPException(status_code=401, detail="Requester user not found")
+
+    # Check if the author exists
+    author = db.query(Employee).filter(Employee.username == authorUsername).first()
+    if not author:
+        raise HTTPException(status_code=401, detail="Author user not found")
+
+    # Check if the tender exists
+    tender = db.query(Tender).filter(Tender.id == tenderId).first()
+    if not tender:
+        raise HTTPException(status_code=404, detail="Tender not found")
+
+    # Check if the requester is responsible for the organization
+    org_responsibility = db.query(OrganizationResponsibility).filter(
+        OrganizationResponsibility.user_id == requester.id,
+        OrganizationResponsibility.organization_id == tender.organizationId
+    ).first()
+
+    if not org_responsibility:
+        raise HTTPException(status_code=403, detail="Insufficient rights to view reviews")
+
+    # Fetch reviews for bids created by the specified author for the specified tender
+    bids = db.query(Bid).filter(Bid.tender_id == tenderId, Bid.author_id == author.id).all()
+    bid_ids = [bid.id for bid in bids]
+
+    if not bid_ids:
+        raise HTTPException(status_code=404, detail="No bids found for the specified author and tender")
+
+    reviews = db.query(BidFeedback).filter(BidFeedback.bid_id.in_(bid_ids)).offset(offset).limit(limit).all()
+
+    return [schemas.BidFeedbackCreate(
+        bidId=review.bid_id,
+        username=review.username,
+        feedback=review.feedback
+    ) for review in reviews]
 
 
 

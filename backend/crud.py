@@ -157,6 +157,35 @@ def create_feedback(db: Session, bidId: UUID, username: str, feedback_data: sche
     db.commit()
     db.refresh(db_feedback)
     return db_feedback
+def rollback_bid(db: Session, bid_id: UUID, version: int, username: str):
+    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    bid = db.query(models.Bid).filter(models.Bid.id == bid_id).first()
+    if not bid:
+        raise HTTPException(status_code=404, detail="Bid not found")
+
+    if version >= bid.version:
+        raise HTTPException(status_code=400, detail="Invalid version number for rollback")
+    print(bid.version)
+    bid.version = version
+    db.commit()
+    db.refresh(bid)
+    print(bid.version)
+
+
+    return schemas.Bid(
+        id=bid.id,
+        name=bid.name,
+        description=bid.description,
+        tenderId=bid.tender_id,
+        status=bid.status,
+        version=bid.version,
+        createdAt=bid.created_at,
+        authorId=bid.author_id,
+        authorType="User"
+    )
 
 
 
