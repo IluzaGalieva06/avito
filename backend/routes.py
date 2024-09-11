@@ -383,7 +383,6 @@ def submit_bid_feedback(
     feedback: str = Body(..., embed=True),
     db: Session = Depends(database.get_db),
 ):
-    # Создаем отзыв
     feedback_data = schemas.BidFeedbackCreate(
         username=username, feedback=feedback, bidId=bidId
     )
@@ -404,7 +403,6 @@ def rollback_bid(
     ),
     db: Session = Depends(database.get_db),
 ):
-    # Call the rollback function from crud
     bid = crud.rollback_bid(db=db, bid_id=bidId, version=version, username=username)
     return bid
 
@@ -422,24 +420,20 @@ def get_bid_reviews(
     ),
     db: Session = Depends(database.get_db),
 ):
-    # Check if the requester exists
     requester = (
         db.query(Employee).filter(Employee.username == requesterUsername).first()
     )
     if not requester:
         raise HTTPException(status_code=401, detail="Requester user not found")
 
-    # Check if the author exists
     author = db.query(Employee).filter(Employee.username == authorUsername).first()
     if not author:
         raise HTTPException(status_code=401, detail="Author user not found")
 
-    # Check if the tender exists
     tender = db.query(Tender).filter(Tender.id == tenderId).first()
     if not tender:
         raise HTTPException(status_code=404, detail="Tender not found")
 
-    # Check if the requester is responsible for the organization
     org_responsibility = (
         db.query(OrganizationResponsibility)
         .filter(
@@ -454,7 +448,6 @@ def get_bid_reviews(
             status_code=403, detail="Insufficient rights to view reviews"
         )
 
-    # Fetch reviews for bids created by the specified author for the specified tender
     bids = (
         db.query(Bid)
         .filter(Bid.tender_id == tenderId, Bid.author_id == author.id)

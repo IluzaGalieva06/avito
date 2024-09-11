@@ -45,7 +45,6 @@ class TenderUpdate(BaseModel):
         allow_population_by_field_name = True
 
 
-# Схема для создания предложения (bid)
 class BidCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
@@ -59,7 +58,6 @@ class BidCreate(BaseModel):
         allow_population_by_field_name = True
 
 
-# Схема для отображения предложения (bid)
 class AuthorTypeEnum(str, Enum):
     ORGANIZATION = "Organization"
     USER = "User"
