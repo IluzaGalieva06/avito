@@ -6,10 +6,11 @@ import os
 
 load_dotenv()
 
-POSTGRES_CONN = os.getenv('POSTGRES_CONN')
+POSTGRES_CONN = os.getenv("POSTGRES_CONN")
 engine = create_engine(POSTGRES_CONN)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()

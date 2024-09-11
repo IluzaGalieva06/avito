@@ -8,7 +8,11 @@ from typing import List, Optional
 
 
 def create_tender(db: Session, tender: schemas.TenderCreate, creator_username: str):
-    user = db.query(models.Employee).filter(models.Employee.username == creator_username).first()
+    user = (
+        db.query(models.Employee)
+        .filter(models.Employee.username == creator_username)
+        .first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -18,7 +22,7 @@ def create_tender(db: Session, tender: schemas.TenderCreate, creator_username: s
         organizationId=tender.organizationId,
         creator_id=user.id,
         serviceType=tender.serviceType,
-        status=tender.status
+        status=tender.status,
     )
     db.add(db_tender)
     db.commit()
@@ -26,7 +30,9 @@ def create_tender(db: Session, tender: schemas.TenderCreate, creator_username: s
     return db_tender
 
 
-def get_tenders(db: Session, limit: int, offset: int, service_type: Optional[List[str]] = None):
+def get_tenders(
+    db: Session, limit: int, offset: int, service_type: Optional[List[str]] = None
+):
     query = db.query(models.Tender)
 
     if service_type:
@@ -36,8 +42,13 @@ def get_tenders(db: Session, limit: int, offset: int, service_type: Optional[Lis
 
     return query.all()
 
-def get_tenders_by_user(db: Session, username: str, limit: int, offset: int) -> List[schemas.TenderSchema]:
-    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+
+def get_tenders_by_user(
+    db: Session, username: str, limit: int, offset: int
+) -> List[schemas.TenderSchema]:
+    user = (
+        db.query(models.Employee).filter(models.Employee.username == username).first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -48,18 +59,19 @@ def get_tenders_by_user(db: Session, username: str, limit: int, offset: int) -> 
 
     results = []
     for tender in tenders:
-        results.append({
-            **tender.__dict__,
-            'creatorUsername': username
-        })
+        results.append({**tender.__dict__, "creatorUsername": username})
 
     return results
 
+
 def create_bid(db: Session, bid_data: schemas.BidCreate):
-    user = db.query(models.Employee).filter(models.Employee.username == bid_data.creator_username).first()
+    user = (
+        db.query(models.Employee)
+        .filter(models.Employee.username == bid_data.creator_username)
+        .first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
 
     author_type = "User"
 
@@ -70,7 +82,7 @@ def create_bid(db: Session, bid_data: schemas.BidCreate):
         organization_id=bid_data.organization_id,
         status=bid_data.status,
         version=1,
-        author_id=user.id
+        author_id=user.id,
     )
     db.add(db_bid)
     db.commit()
@@ -86,11 +98,16 @@ def create_bid(db: Session, bid_data: schemas.BidCreate):
         "version": db_bid.version,
         "createdAt": db_bid.created_at,
         "authorId": db_bid.author_id,
-        "authorType": author_type
+        "authorType": author_type,
     }
 
-def get_bids_by_user(db: Session, username: str, limit: int, offset: int) -> List[schemas.Bid]:
-    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+
+def get_bids_by_user(
+    db: Session, username: str, limit: int, offset: int
+) -> List[schemas.Bid]:
+    user = (
+        db.query(models.Employee).filter(models.Employee.username == username).first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -109,13 +126,15 @@ def get_bids_by_user(db: Session, username: str, limit: int, offset: int) -> Lis
             version=bid.version,
             createdAt=bid.created_at,
             authorId=bid.author_id,
-            authorType="User"
+            authorType="User",
         )
         for bid in bids
     ]
 
 
-def get_bids_for_tender(db: Session, tender_id: str, limit: int, offset: int) -> List[schemas.Bid]:
+def get_bids_for_tender(
+    db: Session, tender_id: str, limit: int, offset: int
+) -> List[schemas.Bid]:
     query = db.query(models.Bid).filter(models.Bid.tender_id == tender_id)
     query = query.order_by(models.Bid.created_at).offset(offset).limit(limit)
 
@@ -124,26 +143,32 @@ def get_bids_for_tender(db: Session, tender_id: str, limit: int, offset: int) ->
     results = []
     for bid in bids:
         author_type = "Organization" if bid.organization_id else "User"
-        results.append(schemas.Bid(
-            id=bid.id,
-            name=bid.name,
-            description=bid.description,
-            tenderId=bid.tender_id,
-            status=bid.status,
-            version=bid.version,
-            createdAt=bid.created_at,
-            authorId=bid.author_id,
-            authorType=author_type
-        ))
+        results.append(
+            schemas.Bid(
+                id=bid.id,
+                name=bid.name,
+                description=bid.description,
+                tenderId=bid.tender_id,
+                status=bid.status,
+                version=bid.version,
+                createdAt=bid.created_at,
+                authorId=bid.author_id,
+                authorType=author_type,
+            )
+        )
 
     return results
 
 
-def create_feedback(db: Session, bidId: UUID, username: str, feedback_data: schemas.BidFeedbackCreate):
+def create_feedback(
+    db: Session, bidId: UUID, username: str, feedback_data: schemas.BidFeedbackCreate
+):
     bid = db.query(models.Bid).filter(models.Bid.id == bidId).first()
     if not bid:
         raise HTTPException(status_code=404, detail="Bid not found")
-    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+    user = (
+        db.query(models.Employee).filter(models.Employee.username == username).first()
+    )
 
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -151,14 +176,18 @@ def create_feedback(db: Session, bidId: UUID, username: str, feedback_data: sche
     db_feedback = models.BidFeedback(
         bid_id=feedback_data.bidId,
         username=feedback_data.username,
-        feedback=feedback_data.feedback
+        feedback=feedback_data.feedback,
     )
     db.add(db_feedback)
     db.commit()
     db.refresh(db_feedback)
     return db_feedback
+
+
 def rollback_bid(db: Session, bid_id: UUID, version: int, username: str):
-    user = db.query(models.Employee).filter(models.Employee.username == username).first()
+    user = (
+        db.query(models.Employee).filter(models.Employee.username == username).first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -167,13 +196,14 @@ def rollback_bid(db: Session, bid_id: UUID, version: int, username: str):
         raise HTTPException(status_code=404, detail="Bid not found")
 
     if version >= bid.version:
-        raise HTTPException(status_code=400, detail="Invalid version number for rollback")
+        raise HTTPException(
+            status_code=400, detail="Invalid version number for rollback"
+        )
     print(bid.version)
     bid.version = version
     db.commit()
     db.refresh(bid)
     print(bid.version)
-
 
     return schemas.Bid(
         id=bid.id,
@@ -184,8 +214,5 @@ def rollback_bid(db: Session, bid_id: UUID, version: int, username: str):
         version=bid.version,
         createdAt=bid.created_at,
         authorId=bid.author_id,
-        authorType="User"
+        authorType="User",
     )
-
-
-

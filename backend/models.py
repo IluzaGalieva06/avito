@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from database import Base
 
+
 class Employee(Base):
     __tablename__ = "employee"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -14,14 +15,16 @@ class Employee(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
 
+
 class Organization(Base):
     __tablename__ = "organization"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     description = Column(Text)
-    type = Column(Enum('IE', 'LLC', 'JSC', name='organization_type'))
+    type = Column(Enum("IE", "LLC", "JSC", name="organization_type"))
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+
 
 class Tender(Base):
     __tablename__ = "tender"
@@ -35,6 +38,7 @@ class Tender(Base):
     version = Column(Integer, default=1)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())
+
 
 class Bid(Base):
     __tablename__ = "bid"
@@ -51,11 +55,12 @@ class Bid(Base):
     feedbacks = relationship("BidFeedback", back_populates="bid")
 
 
-
 class OrganizationResponsibility(Base):
     __tablename__ = "organization_responsibility"
     user_id = Column(UUID(as_uuid=True), ForeignKey("employee.id"), primary_key=True)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organization.id"), primary_key=True)
+    organization_id = Column(
+        UUID(as_uuid=True), ForeignKey("organization.id"), primary_key=True
+    )
 
 
 class BidFeedback(Base):
